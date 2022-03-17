@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Wallet is Ownable {
+contract TokenWallet is Ownable {
     using SafeMath for uint256;
     struct Token {
         bytes32 ticker;
@@ -15,7 +15,7 @@ contract Wallet is Ownable {
     mapping(bytes32 => Token) public tokenMapping;
     bytes32[] public tokenList;
 
-    mapping(address => mapping(bytes32 => uint256)) public balances;
+    mapping(address => mapping(bytes32 => uint256)) public tokenBalances;
 
     modifier tokenExists(bytes32 _ticker) {
         require(
@@ -33,7 +33,7 @@ contract Wallet is Ownable {
         tokenList.push(_ticker);
     }
 
-    function deposit(uint256 _amount, bytes32 _ticker)
+    function depositToken(uint256 _amount, bytes32 _ticker)
         external
         tokenExists(_ticker)
     {
@@ -43,23 +43,21 @@ contract Wallet is Ownable {
             _amount
         );
 
-        balances[msg.sender][_ticker] = balances[msg.sender][_ticker].add(
-            _amount
-        );
+        tokenBalances[msg.sender][_ticker] = tokenBalances[msg.sender][_ticker]
+            .add(_amount);
     }
 
-    function withDraw(uint256 _amount, bytes32 _ticker)
+    function withdrawToken(uint256 _amount, bytes32 _ticker)
         external
         tokenExists(_ticker)
     {
         require(
-            balances[msg.sender][_ticker] >= _amount,
+            tokenBalances[msg.sender][_ticker] >= _amount,
             "Insuficient balance"
         );
 
-        balances[msg.sender][_ticker] = balances[msg.sender][_ticker].sub(
-            _amount
-        );
+        tokenBalances[msg.sender][_ticker] = tokenBalances[msg.sender][_ticker]
+            .sub(_amount);
 
         IERC20(tokenMapping[_ticker].tokenAddress).transfer(
             msg.sender,

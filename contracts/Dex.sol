@@ -2,9 +2,10 @@
 pragma solidity >=0.4.22 <0.9.0;
 pragma abicoder v2;
 
-import "./Wallet.sol";
+import "./TokenWallet.sol";
+import "./EthWallet.sol";
 
-contract Dex is Wallet {
+contract Dex is TokenWallet, EthWallet {
     enum Side {
         BUY,
         SELL
