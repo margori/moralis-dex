@@ -42,7 +42,7 @@ contract Dex is TokenWallet, EthWallet {
     ) external tokenExists(ticker_) {
         if (side_ == Side.BUY) {
             uint256 balance = ethBalances[msg.sender];
-            require(balance >= ethAmount_, "Not enough eths");
+            require(balance >= tokenAmount_.mul(ethAmount_), "Not enough eths");
         } else {
             uint256 balance = tokenBalances[msg.sender][ticker_];
             require(balance >= tokenAmount_, "Not enough token");

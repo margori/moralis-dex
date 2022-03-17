@@ -7,9 +7,6 @@ contract('Dex', async (accounts) => {
     let dex;
     let ticker;
 
-    const owner = accounts[0];
-    const external = accounts[1];
-
     before(async () => {
         link = await Link.deployed();
         dex = await Dex.deployed();
@@ -18,7 +15,7 @@ contract('Dex', async (accounts) => {
         await dex.addToken(ticker, link.address);
 
         await dex.depositToken(200, ticker);
-        await dex.depositEth({ value: 20 });
+        await dex.depositEth({ value: 20000 });
     });
 
     it('should create a buy order if enough eths', async () => {
@@ -33,12 +30,12 @@ contract('Dex', async (accounts) => {
 
     it('should fail create but order a buy order if not enough eths', async () => {
         await truffleAssert.fails(
-            dex.createOrder(Dex.Side.BUY, ticker, 1, 500)
+            dex.createOrder(Dex.Side.BUY, ticker, 3, 50000)
         );
     });
     it('should create a buy order book if enough tokens', async () => {
         await truffleAssert.fails(
-            dex.createOrder(Dex.Side.SELL, ticker, 500, 1)
+            dex.createOrder(Dex.Side.SELL, ticker, 50000, 3)
         );
     });
     it('buy orders should be ordered on price from highest to lowest starting at index 0', async () => {
