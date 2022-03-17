@@ -25,7 +25,9 @@ contract('TokenWallet', async (accounts) => {
     });
     afterEach(async () => {
         const balance = await tokenWallet.tokenBalances(owner, ticker);
-        await tokenWallet.withdrawToken(balance.toNumber(), ticker);
+        if (balance.toNumber() > 0) {
+            await tokenWallet.withdrawToken(balance.toNumber(), ticker);
+        }
     });
 
     it('should deposit 100 Link to tokenWallet', async () => {

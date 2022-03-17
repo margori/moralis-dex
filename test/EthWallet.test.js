@@ -20,8 +20,11 @@ contract('EthWallet', async (accounts) => {
     });
     afterEach(async () => {
         const balance = await ethWallet.ethBalances(owner);
-        await ethWallet.withdrawEth(balance.toNumber());
+        if (balance.toNumber() > 0) {
+            await ethWallet.withdrawEth(balance.toNumber());
+        }
     });
+
     it('should deposit 100 eth to wallet', async () => {
         await ethWallet.depositEth({ value: 100 });
 
