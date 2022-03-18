@@ -131,4 +131,47 @@ contract('Dex', async (accounts) => {
         });
     });
 
+    describe('Market order execution', async () => {
+        it('properly process a buy market order', async () => {
+            const initialEthBalance = await dex.ethBalances(owner);
+            const initialTokenBalance = await dex.tokenBalances(
+                owner,
+                ticker
+            );
+            assert.isAbove(initialEthBalance.toNumber(), 0);
+            assert.isAbove(initialTokenBalance.toNumber(), 0);
+
+            dex.createMarketOrder(Dex.Side.BUY, ticker, 1);
+
+            const finalEthBalance = await dex.ethBalances(owner);
+            const finalTokenBalance = await dex.tokenBalances(
+                owner,
+                ticker
+            );
+
+            assert.isBelow(finalEthBalance, initialEthBalance);
+            assert.isAbove(finalTokenBalance, initialTokenBalance);
+        });
+
+        it('succesfully process a sell market order', async () => {
+            const initialEthBalance = await dex.ethBalances(owner);
+            const initialTokenBalance = await dex.tokenBalances(
+                owner,
+                ticker
+            );
+            assert.isAbove(initialEthBalance.toNumber(), 0);
+            assert.isAbove(initialTokenBalance.toNumber(), 0);
+
+            dex.createMarketOrder(Dex.Side.SELL, ticker, 1);
+
+            const finalEthBalance = await dex.ethBalances(owner);
+            const finalTokenBalance = await dex.tokenBalances(
+                owner,
+                ticker
+            );
+
+            assert.isAbove(finalEthBalance, initialEthBalance);
+            assert.isBelow(finalTokenBalance, initialTokenBalance);
+        });
+    });
 });

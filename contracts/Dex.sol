@@ -20,6 +20,7 @@ contract Dex is TokenWallet, EthWallet {
         bytes32 ticker;
         uint256 amount;
         uint256 price;
+        uint256 filledAmount;
     }
 
     mapping(bytes32 => mapping(Side => Order[])) public orderBook;
@@ -54,7 +55,8 @@ contract Dex is TokenWallet, EthWallet {
             side_,
             ticker_,
             tokenAmount_,
-            ethAmount_
+            ethAmount_,
+            0
         );
         orderBook[ticker_][side_].push(newOrder);
         currentId = currentId.add(1);
@@ -88,15 +90,64 @@ contract Dex is TokenWallet, EthWallet {
         bytes32 ticker_,
         uint256 tokenAmount_
     ) external tokenExists(ticker_) {
+        uint256 ethBalance = ethBalances[msg.sender];
+        uint256 tokenBalance = tokenBalances[msg.sender][ticker_];
         if (side_ == Side.BUY) {
-            uint256 balance = ethBalances[msg.sender];
-            require(balance > 0, "Not enough eths");
+            require(ethBalance > 0, "Not enough eths");
         } else {
-            uint256 balance = tokenBalances[msg.sender][ticker_];
-            require(balance >= tokenAmount_, "Not enough token");
+            require(tokenBalance >= tokenAmount_, "Not enough token");
         }
 
-        //TODO Market order logic
+        Order[] storage orders = orderBook[ticker_][side_];
+
+        uint256 filledTokenAmount = 0;
+        while (orders.length > 0 && filledTokenAmount < tokenAmount_) {
+            uint256 pendingTokenAmount = tokenAmount_.sub(filledTokenAmount);
+            uint256 toFillTokenAmount = pendingTokenAmount < orders[0].amount
+                ? orders[0].amount
+                : pendingTokenAmount;
+
+            uint256 toFillEthAmount = orders[0].price.mul(toFillTokenAmount);
+
+            if (side_ == Side.BUY) {
+                require(ethBalance >= toFillEthAmount, "Not enough eths");
+
+                ethBalances[msg.sender] = ethBalances[msg.sender].sub(
+                    toFillEthAmount
+                );
+                tokenBalances[msg.sender][ticker_] = tokenBalances[msg.sender][
+                    ticker_
+                ].add(toFillTokenAmount);
+                ethBalances[orders[0].trader] = ethBalances[orders[0].trader]
+                    .add(toFillEthAmount);
+                tokenBalances[orders[0].trader][ticker_] = tokenBalances[
+                    orders[0].trader
+                ][ticker_].sub(toFillTokenAmount);
+            } else {
+                ethBalances[msg.sender] = ethBalances[msg.sender].add(
+                    toFillEthAmount
+                );
+                tokenBalances[msg.sender][ticker_] = tokenBalances[msg.sender][
+                    ticker_
+                ].sub(toFillTokenAmount);
+                ethBalances[orders[0].trader] = ethBalances[orders[0].trader]
+                    .add(toFillEthAmount);
+                tokenBalances[orders[0].trader][ticker_] = tokenBalances[
+                    orders[0].trader
+                ][ticker_].sub(toFillTokenAmount);
+            }
+
+            orders[0].filledAmount = orders[0].filledAmount.add(
+                toFillTokenAmount
+            );
+
+            if (orders[0].filledAmount == orders[0].amount) {
+                for (uint256 i = 0; i < orders.length - 1; i++) {
+                    orders[i] = orders[i + 1];
+                }
+                orders.pop();
+            }
+        }
 
         currentId = currentId.add(1);
     }
