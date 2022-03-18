@@ -34,7 +34,7 @@ contract Dex is TokenWallet, EthWallet {
         return orderBook[ticker_][side_];
     }
 
-    function createOrder(
+    function createLimitOrder(
         Side side_,
         bytes32 ticker_,
         uint256 tokenAmount_,
@@ -61,7 +61,7 @@ contract Dex is TokenWallet, EthWallet {
         sortOrders(orderBook[ticker_][side_], side_);
     }
 
-    function sortOrders(Order[] storage orders_, Side side_) internal {
+    function sortOrders(Order[] storage orders_, Side side_) private {
         Order memory auxOrder;
         bool sorted;
         do {
@@ -81,5 +81,23 @@ contract Dex is TokenWallet, EthWallet {
                 }
             }
         } while (!sorted);
+    }
+
+    function createMarketOrder(
+        Side side_,
+        bytes32 ticker_,
+        uint256 tokenAmount_
+    ) external tokenExists(ticker_) {
+        if (side_ == Side.BUY) {
+            uint256 balance = ethBalances[msg.sender];
+            require(balance > 0, "Not enough eths");
+        } else {
+            uint256 balance = tokenBalances[msg.sender][ticker_];
+            require(balance >= tokenAmount_, "Not enough token");
+        }
+
+        //TODO Market order logic
+
+        currentId = currentId.add(1);
     }
 }
